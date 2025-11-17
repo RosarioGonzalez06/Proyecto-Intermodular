@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, Inject } from '@angular/core';
+import { Component, ElementRef, HostListener, inject, Inject, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -8,6 +8,8 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AUTH_SERVICE } from '../../core/services/auth.token';
+import { StrapiAuthService } from '../../core/services/strapi-auth.service';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-login',
@@ -23,9 +25,9 @@ export class LoginComponent {
   registrationSuccess = false;
   navigateTo: string = '';
   private router = inject(Router);
-  private auth = inject(AUTH_SERVICE);
+  private auth = inject(StrapiAuthService);
 
-  constructor(private formSvc: FormBuilder) {
+  constructor(private formSvc: FormBuilder,private http: HttpClient) {
     this.formLogin = this.formSvc.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]],
@@ -40,14 +42,34 @@ export class LoginComponent {
   }
 
   async onSubmit() {
-    this.loginError = '';
-    if (this.formLogin.valid) {
-      const success = await this.auth.login(this.formLogin.value);
-      if (success) {
-        this.router.navigate([this.navigateTo]);
-      } else {
-        this.loginError = 'Usuario no registrado o credenciales incorrectas';
-      }
+  this.loginError = '';
+  if (this.formLogin.valid) {
+    console.log('Formulario válido, llamando login...');
+    const success = await this.auth.login(this.formLogin.value);
+    console.log('Login terminó, éxito:', success);
+    console.log('Token en localStorage:', localStorage.getItem('STRAPI_AUTH_TOKEN'));
+
+    if (success) {
+      this.router.navigate([this.navigateTo]);
+    } else {
+      this.loginError = 'Usuario no registrado o credenciales incorrectas';
+    }
+  } else {
+    console.log('Formulario inválido', this.formLogin.errors);
+  }
+}
+isMenuOpen = false;
+   @ViewChild('menu') menu!: ElementRef;
+
+  ngOnInit(): void {}
+
+  toggleMenu(): void {
+    this.isMenuOpen = !this.isMenuOpen;
+  }
+   @HostListener('document:click', ['$event'])
+  onClick(event: Event) {
+    if (this.isMenuOpen && this.menu && !this.menu.nativeElement.contains(event.target)) {
+      this.isMenuOpen = false;
     }
   }
 

@@ -16,7 +16,7 @@ export class AppComponent {
 
   strapiAuth: StrapiAuthService = inject(StrapiAuthService);
 
-  constructor() {
-    this.strapiAuth;
+  ngOnInit() {
+    this.strapiAuth.autoLogin();
   }
 }

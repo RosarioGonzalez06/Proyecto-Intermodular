@@ -70,6 +70,8 @@ export class StrapiAuthService {
       const data = await firstValueFrom(
         this.http.post<LoginResponse>(`${this.API}/auth/local`, body)
       );
+      console.log('Login response completo:', data);
+console.log('JWT recibido:', data.jwt);                                             
       this.token = data.jwt;
       localStorage.setItem(this.TOKEN_KEY, data.jwt);
       const newUser: User = {
@@ -84,6 +86,27 @@ export class StrapiAuthService {
       return false;
     }
   }
+
+   autoLogin() {
+    const token = localStorage.getItem(this.TOKEN_KEY);
+    if (!token) return;
+    this.token = token;
+    this.http.get<any>(`${this.API}/users/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).subscribe({
+      next: (data) => {
+        const user: User = {
+          email: data.email,
+          name: data.name ?? '',
+          surname: data.surname ?? '',
+        };
+        this.user.set(user);
+      },
+      error: () => {
+        this.logout();
+      }
+    });
+  } 
 
   async register(userData: any & { password: string }): Promise<boolean> {
     this.error.set(null);
